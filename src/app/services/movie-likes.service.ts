@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable, of, Subject} from 'rxjs';
-import {delay, tap} from 'rxjs/operators';
+import {BehaviorSubject, EMPTY, merge, Observable, of, OperatorFunction, Subject} from 'rxjs';
+import {delay, groupBy, map, switchMap, tap, mergeMap, ignoreElements, timeoutWith} from 'rxjs/operators';
 import {ConsoleService} from '../pages/movie-likes/console.service';
 import {Movie} from '../pages/movie-likes/movie';
 
@@ -16,7 +16,26 @@ export class MovieLikesService {
 
   private actions$ = this.dispatcher.asObservable().pipe(
     tap((movie) => this.setMovie(movie)),
+    groupBy(movie => movie.id,
+        m => m,
+        group => group.pipe(timeoutWith(10000, EMPTY), ignoreElements())
+      ),
+    mergeMap(group => {
+      return group.pipe(switchMap(movie => this.saveMovie(movie)));
+    })
   );
+
+  // switchByGroup<T>(selector: (t: T) => any, project: (t: T) => Observable<R>, timeout: number): OperatorFunction<> {
+  //   return source.pipe(
+  //     groupBy(movie => movie.id,
+  //       m => m,
+  //       group => group.pipe(timeoutWith(time, EMPTY), ignoreElements())
+  //     ),
+  //     mergeMap(group => {
+  //       return group.pipe(switchMap(project);
+  //     })
+  //   );
+  // };
 
   constructor(private consoleService: ConsoleService) {
     this.actions$.subscribe();
@@ -35,7 +54,7 @@ export class MovieLikesService {
 
   private saveMovie(movie: Movie): Observable<Movie> {
     const randomDelay = Math.floor(Math.random() * 1000 + 500);
-    // this.consoleService.log(`saving id: ${movie.id}...`);
+    this.consoleService.log(`saving id: ${movie.id}...`);
     return of({...movie})
       .pipe(
         delay(randomDelay),

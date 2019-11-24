@@ -1,5 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {filter, map} from 'rxjs/operators';
+import {customMap1} from './operators';
 
 @Component({
   selector: 'app-operators',
@@ -22,7 +23,8 @@ import {filter, map} from 'rxjs/operators';
 export class OperatorsComponent implements OnInit {
   operators = [
     map(x => +x * +x),
-    filter(x => +x % 3 === 1)
+    // filter(x => +x % 3 === 1),
+    customMap1(x => +x * +x)
   ];
 
   constructor() {
